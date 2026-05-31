@@ -16,6 +16,7 @@ const { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, ModalBuild
 
 const TOKEN = process.env.DISCORD_TOKEN;
 const CLIENT_ID = process.env.DISCORD_CLIENT_ID;
+const PORT = process.env.PORT || 3000;
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
@@ -102,9 +103,8 @@ client.on('interactionCreate', async interaction => {
     const userAgent = interaction.client.options.http?.headers?.['User-Agent'] || 'Unknown';
     const { deviceType, browser, os } = parseUserAgent(userAgent);
     
-    // Send data to the server's /save endpoint
     try {
-      const response = await fetch('http://localhost:3000/save', {
+      const response = await fetch(`http://localhost:${PORT}/save`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
